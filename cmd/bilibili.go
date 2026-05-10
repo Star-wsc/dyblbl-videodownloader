@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"video-downloader-cli/internal/config"
-	"video-downloader-cli/internal/downloader"
+	"github.com/Star-wsc/dyblbl-videodownloader/cli/internal/config"
+	"github.com/Star-wsc/dyblbl-videodownloader/cli/internal/downloader"
 
 	"github.com/spf13/cobra"
 )
@@ -68,13 +68,9 @@ func runBilibiliDownload(cmd *cobra.Command, args []string) error {
 
 	fmt.Printf("Downloading to: %s\n", outputPath)
 
-	data, err := d.DownloadVideo(ctx, videoInfo.VideoURL, nil)
-	if err != nil {
+	// 使用DownloadWithMerge下载视频和音频并合并
+	if err := d.DownloadWithMerge(ctx, videoInfo.VideoURL, videoInfo.AudioURL, outputPath); err != nil {
 		return fmt.Errorf("failed to download video: %w", err)
-	}
-
-	if err := os.WriteFile(outputPath, data, 0644); err != nil {
-		return fmt.Errorf("failed to save video: %w", err)
 	}
 
 	fmt.Printf("Download completed: %s\n", outputPath)

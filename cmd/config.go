@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"video-downloader-cli/internal/config"
+	"github.com/Star-wsc/dyblbl-videodownloader/cli/internal/config"
 
 	"github.com/spf13/cobra"
 )

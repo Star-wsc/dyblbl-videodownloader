@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"video-downloader-cli/internal/config"
-	"video-downloader-cli/internal/downloader"
+	"github.com/Star-wsc/dyblbl-videodownloader/cli/internal/config"
+	"github.com/Star-wsc/dyblbl-videodownloader/cli/internal/downloader"
 
 	"github.com/spf13/cobra"
 )

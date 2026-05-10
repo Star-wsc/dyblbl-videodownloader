@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"video-downloader-cli/cmd"
+	"github.com/Star-wsc/dyblbl-videodownloader/cli/cmd"
 )
 
 func main() {
