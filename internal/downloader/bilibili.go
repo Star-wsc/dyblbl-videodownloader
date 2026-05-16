@@ -13,7 +13,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
-	"syscall"
 	"time"
 
 	"github.com/Star-wsc/dyblbl-videodownloader/cli/internal/models"
@@ -570,10 +569,7 @@ func MergeMP4(videoPath, audioPath, outputPath string) error {
 		"-y",
 		outputPath,
 	)
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		HideWindow:    true,
-		CreationFlags: 0x08000000,
-	}
+	setSysProcAttr(cmd)
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
