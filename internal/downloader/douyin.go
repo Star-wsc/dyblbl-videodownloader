@@ -15,10 +15,11 @@ import (
 )
 
 type DouyinDownloader struct {
-	client *http.Client
+	client    *http.Client
+	speedLimit int // KB/s, 0=unlimited
 }
 
-func NewDouyinDownloader(proxy string) *DouyinDownloader {
+func NewDouyinDownloader(proxy string, speedLimit int) *DouyinDownloader {
 	transport := &http.Transport{}
 	if proxy != "" {
 		proxyURL, err := url.Parse(proxy)
@@ -31,6 +32,7 @@ func NewDouyinDownloader(proxy string) *DouyinDownloader {
 			Timeout:   30 * time.Second,
 			Transport: transport,
 		},
+		speedLimit: speedLimit,
 	}
 }
 
@@ -221,8 +223,7 @@ func (d *DouyinDownloader) DownloadVideo(ctx context.Context, videoURL string, c
 		req.AddCookie(&http.Cookie{Name: name, Value: value})
 	}
 
-	client := &http.Client{Timeout: 120 * time.Second}
-	resp, err := client.Do(req)
+	resp, err := d.client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -255,7 +256,11 @@ func (d *DouyinDownloader) DownloadToFile(ctx context.Context, videoURL, filePat
 		req.AddCookie(&http.Cookie{Name: name, Value: value})
 	}
 
-	client := &http.Client{Timeout: 300 * time.Second}
+	// 使用相同的transport（包含代理配置），但更长的超时时间
+	client := &http.Client{
+		Timeout:   300 * time.Second,
+		Transport: d.client.Transport,
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return fmt.Errorf("请求失败: %w", err)
@@ -279,8 +284,9 @@ func (d *DouyinDownloader) DownloadToFile(ctx context.Context, videoURL, filePat
 	}
 	defer out.Close()
 
+	reader := NewRateLimitReader(resp.Body, d.speedLimit)
 	buf := make([]byte, 32*1024)
-	written, err := io.CopyBuffer(out, resp.Body, buf)
+	written, err := io.CopyBuffer(out, reader, buf)
 	if err != nil {
 		return fmt.Errorf("写入文件失败: %w", err)
 	}

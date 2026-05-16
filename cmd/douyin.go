@@ -36,7 +36,7 @@ func runDouyinDownload(cmd *cobra.Command, args []string) error {
 	url := args[0]
 	cfg := config.GetConfig()
 
-	d := downloader.NewDouyinDownloader(cfg.Proxy)
+	d := downloader.NewDouyinDownloader(cfg.Proxy, cfg.SpeedLimit)
 
 	extractedURL := d.ExtractURLFromText(url)
 	if extractedURL == "" {

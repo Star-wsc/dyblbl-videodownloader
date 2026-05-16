@@ -21,11 +21,12 @@ import (
 )
 
 type BilibiliDownloader struct {
-	client  *http.Client
-	cookies string
+	client    *http.Client
+	cookies   string
+	speedLimit int // KB/s, 0=unlimited
 }
 
-func NewBilibiliDownloader(proxy string) *BilibiliDownloader {
+func NewBilibiliDownloader(proxy string, speedLimit int) *BilibiliDownloader {
 	transport := &http.Transport{}
 	if proxy != "" {
 		proxyURL, err := url.Parse(proxy)
@@ -38,6 +39,7 @@ func NewBilibiliDownloader(proxy string) *BilibiliDownloader {
 			Timeout:   30 * time.Second,
 			Transport: transport,
 		},
+		speedLimit: speedLimit,
 	}
 }
 
@@ -395,8 +397,9 @@ func (d *BilibiliDownloader) DownloadToFile(ctx context.Context, videoURL, fileP
 	}
 	defer out.Close()
 
+	reader := NewRateLimitReader(resp.Body, d.speedLimit)
 	buf := make([]byte, 32*1024)
-	written, err := io.CopyBuffer(out, resp.Body, buf)
+	written, err := io.CopyBuffer(out, reader, buf)
 	if err != nil {
 		return fmt.Errorf("写入文件失败: %w", err)
 	}

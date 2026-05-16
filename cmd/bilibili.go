@@ -35,7 +35,7 @@ func runBilibiliDownload(cmd *cobra.Command, args []string) error {
 	url := args[0]
 	cfg := config.GetConfig()
 
-	d := downloader.NewBilibiliDownloader(cfg.Proxy)
+	d := downloader.NewBilibiliDownloader(cfg.Proxy, cfg.SpeedLimit)
 
 	if cfg.BilibiliCookie != "" {
 		d.SetCookies(cfg.BilibiliCookie)
