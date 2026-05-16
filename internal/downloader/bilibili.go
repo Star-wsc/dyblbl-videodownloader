@@ -3,7 +3,6 @@ package downloader
 import (
 	"bytes"
 	"context"
-	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -37,7 +36,7 @@ func (d *BilibiliDownloader) SetCookies(cookies string) {
 	d.cookies = cookies
 }
 
-func (d *BilibiliDownloader) GetVideoData(ctx context.Context, videoURL string) (*models.VideoInfo, error) {
+func (d *BilibiliDownloader) GetVideoData(ctx context.Context, videoURL string, quality string) (*models.VideoInfo, error) {
 	bvid, err := d.extractBVID(videoURL)
 	if err != nil {
 		return nil, err
@@ -48,7 +47,10 @@ func (d *BilibiliDownloader) GetVideoData(ctx context.Context, videoURL string) 
 		return nil, err
 	}
 
-	videoURLs, audioURL, qualities, selectedQuality, err := d.getVideoURLs(ctx, aid, cid, bvid, "1080p")
+	if quality == "" {
+		quality = "1080p"
+	}
+	videoURLs, audioURL, qualities, selectedQuality, err := d.getVideoURLs(ctx, aid, cid, bvid, quality)
 	if err != nil {
 		return nil, err
 	}
@@ -423,7 +425,10 @@ func (d *BilibiliDownloader) DownloadWithMerge(ctx context.Context, videoURL, au
 		return fmt.Errorf("下载视频流失败: %w", err)
 	}
 
-	videoInfo, _ := os.Stat(videoTemp)
+	videoInfo, err := os.Stat(videoTemp)
+	if err != nil {
+		return fmt.Errorf("获取视频临时文件信息失败: %w", err)
+	}
 	fmt.Printf("[Bilibili] 视频下载完成: %d 字节\n", videoInfo.Size())
 
 	fmt.Printf("[Bilibili] 下载音频流...\n")
@@ -435,7 +440,10 @@ func (d *BilibiliDownloader) DownloadWithMerge(ctx context.Context, videoURL, au
 		return nil
 	}
 
-	audioInfo, _ := os.Stat(audioTemp)
+	audioInfo, err := os.Stat(audioTemp)
+	if err != nil {
+		return fmt.Errorf("获取音频临时文件信息失败: %w", err)
+	}
 	fmt.Printf("[Bilibili] 音频下载完成: %d 字节\n", audioInfo.Size())
 
 	fmt.Printf("[Bilibili] 移除M4S头部...\n")
@@ -755,65 +763,4 @@ func mergeProgressiveFiles(videoFile, audioFile *mp4.File, outputPath string) er
 
 	fmt.Printf("[Merge] 渐进式MP4合并成功!\n")
 	return nil
-}
-
-type MP4Box struct {
-	Type string
-	Size uint64
-	Data []byte
-}
-
-func readAllBoxes(r *bytes.Reader) ([]MP4Box, error) {
-	var boxes []MP4Box
-
-	for {
-		if r.Len() < 8 {
-			break
-		}
-
-		var header [8]byte
-		if _, err := r.Read(header[:]); err != nil {
-			if err == io.EOF {
-				break
-			}
-			return nil, err
-		}
-
-		size := binary.BigEndian.Uint32(header[0:4])
-		boxType := string(header[4:8])
-
-		var boxSize uint64
-		var dataOffset uint64 = 8
-
-		if size == 1 {
-			var extHeader [8]byte
-			if _, err := r.Read(extHeader[:]); err != nil {
-				break
-			}
-			boxSize = binary.BigEndian.Uint64(extHeader[:])
-			dataOffset = 16
-		} else if size == 0 {
-			boxSize = uint64(r.Len()) + dataOffset
-		} else {
-			boxSize = uint64(size)
-		}
-
-		if boxSize < dataOffset {
-			break
-		}
-
-		dataSize := boxSize - dataOffset
-		data := make([]byte, dataSize)
-		if _, err := r.Read(data); err != nil && err != io.EOF {
-			return nil, err
-		}
-
-		boxes = append(boxes, MP4Box{
-			Type: boxType,
-			Size: boxSize,
-			Data: data,
-		})
-	}
-
-	return boxes, nil
 }

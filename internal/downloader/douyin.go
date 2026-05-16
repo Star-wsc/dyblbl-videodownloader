@@ -43,6 +43,7 @@ var videoHeaders = map[string]string{
 var apiList = []string{
 	"https://api.douyin.wtf/api?url=%s",
 	"https://www.douyin.wtf/api?url=%s",
+	"https://api.tiktokv.com/douyin?url=%s",
 }
 
 func (d *DouyinDownloader) ExtractURLFromText(text string) string {
@@ -180,6 +181,13 @@ func (d *DouyinDownloader) processVideoURL(videoURL string) string {
 		videoURL = "https:" + videoURL
 	}
 	videoURL = strings.Replace(videoURL, "playwm", "play", -1)
+
+	re := regexp.MustCompile(`[?&]watermark=\d+`)
+	videoURL = re.ReplaceAllString(videoURL, "")
+
+	re2 := regexp.MustCompile(`[?&]ratio=\w+`)
+	videoURL = re2.ReplaceAllString(videoURL, "")
+
 	return videoURL
 }
 

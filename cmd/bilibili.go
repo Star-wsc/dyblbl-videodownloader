@@ -44,7 +44,7 @@ func runBilibiliDownload(cmd *cobra.Command, args []string) error {
 	fmt.Printf("Parsing video: %s\n", url)
 
 	ctx := context.Background()
-	videoInfo, err := d.GetVideoData(ctx, url)
+	videoInfo, err := d.GetVideoData(ctx, url, bilibiliQuality)
 	if err != nil {
 		return fmt.Errorf("failed to get video data: %w", err)
 	}

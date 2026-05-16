@@ -77,7 +77,10 @@ func (c *Config) loadFromFile() {
 func (c *Config) Save() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	return c.saveInternal()
+}
 
+func (c *Config) saveInternal() error {
 	if err := os.MkdirAll(filepath.Dir(c.configFile), 0755); err != nil {
 		return err
 	}
@@ -101,26 +104,26 @@ func (c *Config) SetDownloadDir(dir string) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.DownloadDir = dir
-	return c.Save()
+	return c.saveInternal()
 }
 
 func (c *Config) SetProxy(proxy string) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.Proxy = proxy
-	return c.Save()
+	return c.saveInternal()
 }
 
 func (c *Config) SetBilibiliCookie(cookie string) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.BilibiliCookie = cookie
-	return c.Save()
+	return c.saveInternal()
 }
 
 func (c *Config) SetDouyinCookie(cookie string) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.DouyinCookie = cookie
-	return c.Save()
+	return c.saveInternal()
 }
