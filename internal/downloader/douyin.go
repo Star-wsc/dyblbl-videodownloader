@@ -73,7 +73,14 @@ func (d *DouyinDownloader) ExtractURLFromText(text string) string {
 }
 
 func (d *DouyinDownloader) GetVideoData(ctx context.Context, videoURL string) (*models.VideoInfo, error) {
+	// 策略1: 第三方API
 	result, err := d.ParseViaAPI(ctx, videoURL)
+	if err == nil && result.VideoURL != "" {
+		return result, nil
+	}
+
+	// 策略2: HTML解析（详情API + 正则提取）
+	result, err = d.ParseVideoWithHTML(videoURL)
 	if err == nil && result.VideoURL != "" {
 		return result, nil
 	}
