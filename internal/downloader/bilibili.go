@@ -15,7 +15,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/Star-wsc/dyblbl-videodownloader/cli/internal/models"
+	"github.com/Star-wsc/dyblbl-videodownloader/internal/models"
 
 	"github.com/Eyevinn/mp4ff/mp4"
 )

@@ -1,4 +1,4 @@
-module github.com/Star-wsc/dyblbl-videodownloader/cli
+module github.com/Star-wsc/dyblbl-videodownloader
 
 go 1.26.1
 

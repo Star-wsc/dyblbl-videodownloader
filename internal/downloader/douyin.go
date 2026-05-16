@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Star-wsc/dyblbl-videodownloader/cli/internal/models"
+	"github.com/Star-wsc/dyblbl-videodownloader/internal/models"
 )
 
 type DouyinDownloader struct {
