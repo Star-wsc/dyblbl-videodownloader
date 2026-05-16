@@ -1,9 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/spf13/cobra"
 )
 
@@ -22,12 +19,4 @@ func Execute() error {
 
 func init() {
 	rootCmd.CompletionOptions.HiddenDefaultCmd = true
-}
-
-func printError(msg string, args ...interface{}) {
-	fmt.Fprintf(os.Stderr, "Error: "+msg+"\n", args...)
-}
-
-func printSuccess(msg string, args ...interface{}) {
-	fmt.Printf(msg+"\n", args...)
 }

@@ -5,7 +5,6 @@ type Platform string
 const (
 	PlatformDouyin  Platform = "douyin"
 	PlatformBilibili Platform = "bilibili"
-	PlatformTikTok  Platform = "tiktok"
 )
 
 type VideoInfo struct {
@@ -15,10 +14,8 @@ type VideoInfo struct {
 	CoverURL           string
 	VideoURL           string
 	AudioURL           string
-	DownloadURL        string
 	SelectedQuality    string
 	AvailableQualities []string
-	Cookies            map[string]string
 	Platform           Platform
 }
 

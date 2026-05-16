@@ -38,6 +38,9 @@ func Load() *Config {
 }
 
 func (c *Config) loadFromFile() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	f, err := os.Open(c.configFile)
 	if err != nil {
 		return
