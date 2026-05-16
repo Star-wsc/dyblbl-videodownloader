@@ -127,3 +127,31 @@ func (c *Config) SetDouyinCookie(cookie string) error {
 	c.DouyinCookie = cookie
 	return c.saveInternal()
 }
+
+func (c *Config) SetMaxConcurrent(val int) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.MaxConcurrent = val
+	return c.saveInternal()
+}
+
+func (c *Config) SetSpeedLimit(val int) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.SpeedLimit = val
+	return c.saveInternal()
+}
+
+func (c *Config) SetFileTemplate(val string) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.FileTemplate = val
+	return c.saveInternal()
+}
+
+func (c *Config) SetAutoClassify(val bool) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.AutoClassify = val
+	return c.saveInternal()
+}

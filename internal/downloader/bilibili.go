@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -24,10 +25,18 @@ type BilibiliDownloader struct {
 	cookies string
 }
 
-func NewBilibiliDownloader() *BilibiliDownloader {
+func NewBilibiliDownloader(proxy string) *BilibiliDownloader {
+	transport := &http.Transport{}
+	if proxy != "" {
+		proxyURL, err := url.Parse(proxy)
+		if err == nil {
+			transport.Proxy = http.ProxyURL(proxyURL)
+		}
+	}
 	return &BilibiliDownloader{
 		client: &http.Client{
-			Timeout: 30 * time.Second,
+			Timeout:   30 * time.Second,
+			Transport: transport,
 		},
 	}
 }
@@ -506,72 +515,17 @@ func truncateURL(url string, maxLen int) string {
 
 // MergeMP4 合并视频和音频文件
 func MergeMP4(videoPath, audioPath, outputPath string) error {
-	videoData, err := os.ReadFile(videoPath)
-	if err != nil {
-		return fmt.Errorf("读取视频文件失败: %w", err)
-	}
-
-	audioData, err := os.ReadFile(audioPath)
-	if err != nil {
-		return fmt.Errorf("读取音频文件失败: %w", err)
-	}
-
-	fmt.Printf("[Merge] 原始视频大小: %d 字节, 音频大小: %d 字节\n", len(videoData), len(audioData))
-
-	if len(videoData) > 8 {
-		allZero := true
-		for i := 0; i < 8; i++ {
-			if videoData[i] != 0 {
-				allZero = false
-				break
-			}
-		}
-		if allZero {
-			fmt.Printf("[Merge] 检测到Bilibili m4s格式，移除视频8字节头部\n")
-			videoData = videoData[8:]
-		}
-	}
-
-	if len(audioData) > 8 {
-		allZero := true
-		for i := 0; i < 8; i++ {
-			if audioData[i] != 0 {
-				allZero = false
-				break
-			}
-		}
-		if allZero {
-			fmt.Printf("[Merge] 检测到Bilibili m4s格式，移除音频8字节头部\n")
-			audioData = audioData[8:]
-		}
-	}
-
-	fmt.Printf("[Merge] 移除头部后 - 视频: %d 字节, 音频: %d 字节\n", len(videoData), len(audioData))
-
-	tempVideoPath := videoPath + ".clean.mp4"
-	tempAudioPath := audioPath + ".clean.m4a"
-
-	if err := os.WriteFile(tempVideoPath, videoData, 0644); err != nil {
-		return fmt.Errorf("写入临时视频文件失败: %w", err)
-	}
-	defer os.Remove(tempVideoPath)
-
-	if err := os.WriteFile(tempAudioPath, audioData, 0644); err != nil {
-		return fmt.Errorf("写入临时音频文件失败: %w", err)
-	}
-	defer os.Remove(tempAudioPath)
-
 	ffmpegPath, err := getBuiltinFFmpeg()
 	if err != nil {
 		fmt.Printf("[Merge] 未找到内置FFmpeg，尝试纯Go合并: %v\n", err)
-		return mergeWithMP4FF(videoData, audioData, outputPath)
+		return mergeWithMP4FFFiles(videoPath, audioPath, outputPath)
 	}
 
 	fmt.Printf("[Merge] 使用内置FFmpeg: %s\n", ffmpegPath)
 
 	cmd := exec.Command(ffmpegPath,
-		"-i", tempVideoPath,
-		"-i", tempAudioPath,
+		"-i", videoPath,
+		"-i", audioPath,
 		"-c:v", "copy",
 		"-c:a", "copy",
 		"-y",
@@ -590,6 +544,46 @@ func MergeMP4(videoPath, audioPath, outputPath string) error {
 	}
 
 	return nil
+}
+
+func mergeWithMP4FFFiles(videoPath, audioPath, outputPath string) error {
+	videoData, err := os.ReadFile(videoPath)
+	if err != nil {
+		return fmt.Errorf("读取视频文件失败: %w", err)
+	}
+
+	audioData, err := os.ReadFile(audioPath)
+	if err != nil {
+		return fmt.Errorf("读取音频文件失败: %w", err)
+	}
+
+	if len(videoData) > 8 {
+		allZero := true
+		for i := 0; i < 8; i++ {
+			if videoData[i] != 0 {
+				allZero = false
+				break
+			}
+		}
+		if allZero {
+			videoData = videoData[8:]
+		}
+	}
+
+	if len(audioData) > 8 {
+		allZero := true
+		for i := 0; i < 8; i++ {
+			if audioData[i] != 0 {
+				allZero = false
+				break
+			}
+		}
+		if allZero {
+			audioData = audioData[8:]
+		}
+	}
+
+	return mergeWithMP4FF(videoData, audioData, outputPath)
 }
 
 func getBuiltinFFmpeg() (string, error) {

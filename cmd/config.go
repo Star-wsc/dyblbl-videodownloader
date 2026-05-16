@@ -80,6 +80,37 @@ func runConfigSet(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("failed to set douyin cookie: %w", err)
 		}
 		fmt.Println("Douyin cookie set successfully")
+	case "max-concurrent":
+		val := 0
+		fmt.Sscanf(value, "%d", &val)
+		if val <= 0 {
+			return fmt.Errorf("invalid value for max-concurrent: %s", value)
+		}
+		if err := cfg.SetMaxConcurrent(val); err != nil {
+			return fmt.Errorf("failed to set max concurrent: %w", err)
+		}
+		fmt.Printf("Max concurrent set to: %d\n", val)
+	case "speed-limit":
+		val := 0
+		fmt.Sscanf(value, "%d", &val)
+		if val < 0 {
+			return fmt.Errorf("invalid value for speed-limit: %s", value)
+		}
+		if err := cfg.SetSpeedLimit(val); err != nil {
+			return fmt.Errorf("failed to set speed limit: %w", err)
+		}
+		fmt.Printf("Speed limit set to: %d KB/s\n", val)
+	case "file-template":
+		if err := cfg.SetFileTemplate(value); err != nil {
+			return fmt.Errorf("failed to set file template: %w", err)
+		}
+		fmt.Printf("File template set to: %s\n", value)
+	case "auto-classify":
+		val := value == "true" || value == "1" || value == "yes"
+		if err := cfg.SetAutoClassify(val); err != nil {
+			return fmt.Errorf("failed to set auto classify: %w", err)
+		}
+		fmt.Printf("Auto classify set to: %v\n", val)
 	default:
 		return fmt.Errorf("unknown configuration key: %s", key)
 	}

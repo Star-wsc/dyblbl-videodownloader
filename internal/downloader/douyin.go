@@ -18,10 +18,18 @@ type DouyinDownloader struct {
 	client *http.Client
 }
 
-func NewDouyinDownloader() *DouyinDownloader {
+func NewDouyinDownloader(proxy string) *DouyinDownloader {
+	transport := &http.Transport{}
+	if proxy != "" {
+		proxyURL, err := url.Parse(proxy)
+		if err == nil {
+			transport.Proxy = http.ProxyURL(proxyURL)
+		}
+	}
 	return &DouyinDownloader{
 		client: &http.Client{
-			Timeout: 30 * time.Second,
+			Timeout:   30 * time.Second,
+			Transport: transport,
 		},
 	}
 }
@@ -224,5 +232,59 @@ func (d *DouyinDownloader) DownloadVideo(ctx context.Context, videoURL string, c
 		return nil, fmt.Errorf("HTTP status: %d", resp.StatusCode)
 	}
 
+	contentType := resp.Header.Get("Content-Type")
+	if contentType == "text/html" || contentType == "" {
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 2048))
+		return nil, fmt.Errorf("意外的内容类型: %s, 响应: %s", contentType, string(body))
+	}
+
 	return io.ReadAll(resp.Body)
+}
+
+func (d *DouyinDownloader) DownloadToFile(ctx context.Context, videoURL, filePath string, cookies map[string]string) error {
+	req, err := http.NewRequestWithContext(ctx, "GET", videoURL, nil)
+	if err != nil {
+		return fmt.Errorf("创建请求失败: %w", err)
+	}
+
+	for k, v := range videoHeaders {
+		req.Header.Set(k, v)
+	}
+
+	for name, value := range cookies {
+		req.AddCookie(&http.Cookie{Name: name, Value: value})
+	}
+
+	client := &http.Client{Timeout: 300 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("请求失败: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
+		return fmt.Errorf("HTTP错误: %d, 响应: %s", resp.StatusCode, string(body))
+	}
+
+	contentType := resp.Header.Get("Content-Type")
+	if contentType == "text/html" || contentType == "" {
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 2048))
+		return fmt.Errorf("意外的内容类型: %s, 响应: %s", contentType, string(body))
+	}
+
+	out, err := os.Create(filePath)
+	if err != nil {
+		return fmt.Errorf("创建文件失败: %w", err)
+	}
+	defer out.Close()
+
+	buf := make([]byte, 32*1024)
+	written, err := io.CopyBuffer(out, resp.Body, buf)
+	if err != nil {
+		return fmt.Errorf("写入文件失败: %w", err)
+	}
+
+	fmt.Printf("[Douyin] 下载完成: %d 字节 -> %s\n", written, filePath)
+	return nil
 }

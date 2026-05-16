@@ -7,10 +7,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var version = "dev"
+
 var rootCmd = &cobra.Command{
-	Use:   "vdl",
-	Short: "Video Downloader CLI - Download videos from Douyin and Bilibili",
-	Long:  `A command-line tool for downloading videos from Douyin (TikTok China) and Bilibili.`,
+	Use:     "vdl",
+	Short:   "Video Downloader CLI - Download videos from Douyin and Bilibili",
+	Long:    `A command-line tool for downloading videos from Douyin (TikTok China) and Bilibili.`,
+	Version: version,
 }
 
 func Execute() error {

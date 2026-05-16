@@ -36,7 +36,7 @@ func runDouyinDownload(cmd *cobra.Command, args []string) error {
 	url := args[0]
 	cfg := config.GetConfig()
 
-	d := downloader.NewDouyinDownloader()
+	d := downloader.NewDouyinDownloader(cfg.Proxy)
 
 	extractedURL := d.ExtractURLFromText(url)
 	if extractedURL == "" {
@@ -84,13 +84,8 @@ func runDouyinDownload(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	data, err := d.DownloadVideo(ctx, videoInfo.VideoURL, cookies)
-	if err != nil {
+	if err := d.DownloadToFile(ctx, videoInfo.VideoURL, outputPath, cookies); err != nil {
 		return fmt.Errorf("failed to download video: %w", err)
-	}
-
-	if err := os.WriteFile(outputPath, data, 0644); err != nil {
-		return fmt.Errorf("failed to save video: %w", err)
 	}
 
 	fmt.Printf("Download completed: %s\n", outputPath)
@@ -118,8 +113,9 @@ func sanitizeFilename(name string) string {
 	for _, char := range invalid {
 		result = strings.ReplaceAll(result, char, "_")
 	}
-	if len(result) > 100 {
-		result = result[:100]
+	runes := []rune(result)
+	if len(runes) > 80 {
+		result = string(runes[:80])
 	}
 	return strings.TrimSpace(result)
 }
