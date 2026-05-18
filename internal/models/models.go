@@ -17,6 +17,7 @@ type VideoInfo struct {
 	SelectedQuality    string
 	AvailableQualities []string
 	Platform           Platform
+	Cookies            map[string]string
 }
 
 type DownloadResult struct {

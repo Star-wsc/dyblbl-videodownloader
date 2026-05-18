@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -169,28 +170,6 @@ func (d *DouyinDownloader) extractAPIData(data map[string]interface{}) *models.V
 		AvailableQualities: getKeys(videoURLs),
 		Platform:           models.PlatformDouyin,
 	}
-}
-
-func (d *DouyinDownloader) extractVideoURLs(videoInfo map[string]interface{}) map[string]string {
-	urls := make(map[string]string)
-
-	playAddr, _ := videoInfo["play_addr"].(map[string]interface{})
-	if playAddr == nil {
-		playAddr, _ = videoInfo["playAddr"].(map[string]interface{})
-	}
-
-	if playAddr != nil {
-		urlList, _ := playAddr["url_list"].([]interface{})
-		if len(urlList) > 0 {
-			videoURL, _ := urlList[0].(string)
-			videoURL = d.processVideoURL(videoURL)
-			urls["normal"] = videoURL
-			urls["high"] = videoURL
-			urls["super"] = videoURL
-		}
-	}
-
-	return urls
 }
 
 func (d *DouyinDownloader) processVideoURL(videoURL string) string {
